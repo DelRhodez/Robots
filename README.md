@@ -4,4 +4,4 @@
 
 Команды:
 npm start - запуск dev-сервера
-npm run build - сборка проекта для production
+npm run build - сборка проекта для production# -
