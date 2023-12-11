@@ -112,3 +112,39 @@ function showRobotInfo(robot) {
         e.preventDefault();
     }
 }
+
+// document.forms[0].onsubmit = function(e) {
+//     e.preventDefault();
+//     e.target.elements[1].value = e.target.elements[1].value + "@robot.ru";
+//     console.log(`
+//         name: ${e.target.elements[0].value}
+//         email: ${e.target.elements[1].value}
+//     `)
+// }
+document.forms[0].onsubmit = function(e) {
+        e.preventDefault();
+        console.log(`
+            name: ${capitalize(e.target.elements[0].value)}
+            email: ${e.target.elements[1].value}
+        `)
+    }
+    function capitalize(string) {
+        return string[0].toUpperCase() + string.slice(1).toLowerCase()
+    }
+
+    let [name, email] = document.forms[0].elements;
+
+    name.oninput = email.oninput = function(e) {
+        window.localStorage.createRobot= JSON.stringify({
+            name: name.value,
+            email: email.value
+        })
+        console.log(JSON.parse(window.localStorage.createRobot))
+    }
+document.addEventListener("DOMContentLoaded", () => {
+    if (window.localStorage.createRobot) {
+        let data = JSON.parse(window.localStorage.createRobot)
+        name.value = data.name;
+        email.value = data.email;
+    }
+})
