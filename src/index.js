@@ -7,16 +7,51 @@ class Robot {
         this.name = name;
         this.email = email;
     }
+
+    appendRobot(selector) {
+        const robotContainer = document.createElement("div");
+        robotContainer.classList.add("robot");
+    
+        robotContainer.onclick = e => console.log(e);
+        const robotAvatar = document.createElement("img");
+        robotAvatar.classList.add("robot__avatar");
+        robotAvatar.src = `https://robohash.org/${this.id}?size=200x200`;
+        robotContainer.append(robotAvatar);
+    
+        const robotName = document.createElement("h3");
+        robotName.innerHTML = this.name;
+        robotContainer.append(robotName);
+    
+        const robotEmail = document.createElement("p");
+        robotEmail.innerHTML = this.email;
+        robotContainer.append(robotEmail);
+    
+        const removeButton = document.createElement("button");
+        removeButton.innerHTML = "Remove";
+        removeButton.onclick = () => {
+            robotContainer.remove(); // Удаляет элемент из DOM
+    
+            // Удаляет робота из массива
+            robots.splice(
+                robots.findIndex(r => r.id === this.id), 1
+            );
+        }
+        robotContainer.append(removeButton);
+        document.querySelector(selector).append(robotContainer);
+    }
 }
 
-let robots = [
-    new Robot(1, "First", "first@robot.ru"),
-    new Robot(2, "Second", "second@robot.ru"),
-    new Robot(3, "Third", "third@robot.ru"),
-    new Robot(4, "Fourth", "first@robot.ru"),
-    new Robot(5, "Fifth", "second@robot.ru"),
-    new Robot(6, "Sixth", "third@robot.ru"),
-];
+let robots = [];
+
+async function getRobots(url) {
+    const response = await fetch(url);
+    const robotsArray = await response.json();
+    robots = robotsArray.map(({id, name, email}) => new Robot(id, name, email));
+}
+
+const url = "https://jsonplaceholder.typicode.com/users";
+
+await getRobots(url);
 
 let filteredRobots = robots;
 
@@ -33,59 +68,17 @@ filterInput.oninput = (e) => {
         }
     })
 
-    filteredRobots.forEach(item => appendRobot(item))
-    console.log(filteredRobots);
+    filteredRobots.forEach(robot => robot.appendRobot(".robots"))
 }
 
-function appendRobot(robot) {
-    const robotContainer = document.createElement("div");
-    robotContainer.classList.add("robot");
+robots.forEach(robot => robot.appendRobot(".robots"));
 
-    robotContainer.onclick = e => console.log(e);
-    const robotAvatar = document.createElement("img");
-    robotAvatar.classList.add("robot__avatar");
-    robotAvatar.src = `https://robohash.org/${robot.id}?size=200x200`;
-    robotContainer.append(robotAvatar);
-
-    const robotName = document.createElement("h3");
-    robotName.innerHTML = robot.name;
-    robotContainer.append(robotName);
-
-    const robotEmail = document.createElement("p");
-    robotEmail.innerHTML = robot.email;
-    robotContainer.append(robotEmail);
-
-    const removeButton = document.createElement("button");
-    removeButton.innerHTML = "Remove";
-    removeButton.onclick = () => {
-        robotContainer.remove(); // Удаляет элемент из DOM
-
-        // Удаляет робота из массива
-        robots.splice(
-            robots.findIndex(r => r.id === robot.id), 1
-        );
-    }
-    robotContainer.append(removeButton);
-    robotContainer.oncontextmenu = showRobotInfo(robot);
-    document.querySelector(".robots").append(robotContainer);
-}
-
-robots.forEach((robot) => appendRobot(robot));
-
-function createRobot() {
+function createRobot(name, email) {
     let robotID = robots.length ? robots[robots.length - 1].id + 1 : 1;
-    let robotName = document.querySelector("#name").value;
-    let robotEmail = document.querySelector("#email").value;
-
-    let newRobot = new Robot(robotID, robotName, robotEmail);
+    let newRobot = new Robot(robotID, name, email);
     robots.push(newRobot);
-    appendRobot(newRobot);
-
-    document.querySelector("#name").value = "";
-    document.querySelector("#email").value = "";
+    newRobot.appendRobot(".robots");
 }
-
-document.querySelector("#create").onclick = createRobot;
 
 // Вызов контекстного меню
 let showRobotCard = false;
@@ -97,54 +90,34 @@ document.body.addEventListener("click", () => {
     robotCard.style.display = showRobotCard ? "flex" : "none";
 })
 
-function showRobotInfo(robot) {
-    return function(e) {
-        robotCard.innerHTML = "";
-        const robotAvatar = document.createElement("img");
-        robotAvatar.src = `https://robohash.org/${robot.id}?size=300x300`;
-        robotCard.append(robotAvatar);
-
-        showRobotCard = true;
-        robotCard.style.display = showRobotCard ? "flex" : "none";
-        robotCard.style.top = e.clientY + "px";
-        robotCard.style.left = e.clientX + "px";
-        
-        e.preventDefault();
-    }
+document.forms[0].onsubmit = function(e) {
+    e.preventDefault();
+    createRobot(capitalize(e.target.elements[0].value), e.target.elements[1].value);
+    e.target.elements[0].value = "";
+    e.target.elements[1].value = "";
 }
 
-// document.forms[0].onsubmit = function(e) {
-//     e.preventDefault();
-//     e.target.elements[1].value = e.target.elements[1].value + "@robot.ru";
-//     console.log(`
-//         name: ${e.target.elements[0].value}
-//         email: ${e.target.elements[1].value}
-//     `)
-// }
-document.forms[0].onsubmit = function(e) {
-        e.preventDefault();
-        console.log(`
-            name: ${capitalize(e.target.elements[0].value)}
-            email: ${e.target.elements[1].value}
-        `)
-    }
-    function capitalize(string) {
-        return string[0].toUpperCase() + string.slice(1).toLowerCase()
-    }
+function capitalize(string) {
+    return string[0].toUpperCase() + string.slice(1).toLowerCase()
+}
 
-    let [name, email] = document.forms[0].elements;
+let [nameInput, emailInput] = document.forms[0].elements;
+nameInput.oninput = handleInput;
+emailInput.oninput = handleInput;
 
-    name.oninput = email.oninput = function(e) {
-        window.localStorage.createRobot= JSON.stringify({
-            name: name.value,
-            email: email.value
-        })
-        console.log(JSON.parse(window.localStorage.createRobot))
-    }
+function handleInput(e) {
+    window.localStorage.createRobot = JSON.stringify({
+        name: nameInput.value,
+        email: emailInput.value
+    })
+
+    console.log(JSON.parse(window.localStorage.createRobot))
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     if (window.localStorage.createRobot) {
         let data = JSON.parse(window.localStorage.createRobot)
-        name.value = data.name;
-        email.value = data.email;
+        nameInput.value = data.name;
+        emailInput.value = data.email;
     }
 })
